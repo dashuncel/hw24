@@ -59,8 +59,11 @@ def find_in_files(what, files):
                 result = chardet.detect(data)
                 if find_in_file(what, data.decode(result['encoding'])):
                     pool.append(file)
-        except FileNotFoundError:
-            print('Ошибка открытия файла: {}'.format(file))
+        except IOError as e:
+            print("I/O error({0}): {1}".format(e.errno, e.strerror))
+        except:
+            print("Unexpected error:", sys.exc_info()[0])
+            raise
     return pool
 
 
@@ -71,20 +74,20 @@ def print_files(files, str):
 
 
 migrations = 'Migrations'
-files = [f for f in os.listdir(os.path.join(os.path.abspath(os.path.dirname(__file__)), migrations))
-         if f.endswith('.sql')]
-files = list(map(lambda f: os.path.join(os.path.abspath(os.path.dirname(__file__)), migrations, f), files))
+migrations_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), migrations)
+
+files = [f for f in os.listdir(migrations_dir) if f.endswith('.sql')]
+files = list(map(lambda f: os.path.join(migrations_dir, f), files))
 main_list = files
 
 while True:
     str_to_find = input('Введите строку для поиска: ').lower()
-    if str_to_find == '':
+    if not str_to_find:
         break
-    else:
-        files = find_in_files(str_to_find, files)
-        print_files(files, str_to_find)
-        if len(files) == 0:
-            files = main_list
+    files = find_in_files(str_to_find, files)
+    print_files(files, str_to_find)
+    if not files:
+        files = main_list
 
 
 
